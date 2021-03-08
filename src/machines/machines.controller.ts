@@ -8,45 +8,63 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Put,
 } from '@nestjs/common';
-import { ProductAndMachine } from './type';
+import {
+  DecreaseQuantity,
+  MachineWithProductMachine,
+  MachineWithSoldOut,
+  ProductAndQuantity,
+} from './type';
 
 @Controller('machines')
 export class MachinesController {
-  constructor(private MachinesService: MachinesService) {}
+  constructor(private machinesService: MachinesService) {}
 
   @Get()
   async findAll(): Promise<Machine[]> {
-    return await this.MachinesService.findAll();
+    return await this.machinesService.findAll();
   }
 
   @Post()
   async addMachine(
     @Body() payload: Prisma.MachineCreateInput,
   ): Promise<Machine> {
-    return await this.MachinesService.addMachine(payload);
+    return await this.machinesService.addMachine(payload);
+  }
+
+  @Get('/soldout')
+  async getSoldOutSummary(): Promise<MachineWithSoldOut[]> {
+    return await this.machinesService.getMachineWithSoldOut();
   }
 
   @Get('/:id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<Machine> {
-    return await this.MachinesService.findOne(id);
+    return await this.machinesService.findOne(id);
   }
 
   @Delete('/:id')
   async deleteMachine(@Param('id', ParseIntPipe) id: number): Promise<Machine> {
-    return await this.MachinesService.deleteMachine(id);
+    return await this.machinesService.deleteMachine(id);
   }
 
   @Get('/:id/products')
-  async findProductAll(@Param('id', ParseIntPipe) id: number): Promise<any[]> {
-    return await this.MachinesService.findProductInMachine(id);
+  async findProductAll(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<MachineWithProductMachine> {
+    return await this.machinesService.findProductInMachine(id);
   }
 
   @Post('/:id/products')
   async addProductToMachine(
     @Param('id', ParseIntPipe) id: number,
-    @Body() payload: ProductAndMachine,
+    @Body() payload: ProductAndQuantity,
   ): Promise<Machine> {
-    return await this.MachinesService.addProductToMachine(id, payload);
+    return await this.machinesService.addProductToMachine(id, payload);
+  }
+
+  @Put('/:id/products')
+  async buyProduct(@Body() payload: DecreaseQuantity): Promise<Machine> {
+    return await this.machinesService.buyProduct(payload);
   }
 }

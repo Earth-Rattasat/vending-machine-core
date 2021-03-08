@@ -1,9 +1,18 @@
 import { Machine, Product_Machine } from '@prisma/client';
-export interface ProductAndMachine {
+export interface ProductAndQuantity {
   productId: number;
-  quantity: number;
+  quantity?: number;
+}
+
+export interface DecreaseQuantity extends ProductAndQuantity {
+  machineId: number;
 }
 
 export interface MachineWithProductMachine extends Machine {
   Product_Machine: Product_Machine[];
+}
+
+export interface MachineWithSoldOut {
+  machineId: number;
+  soldOut: number;
 }

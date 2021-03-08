@@ -1,7 +1,12 @@
-import { MachineWithProductMachine, ProductAndMachine } from './type/machines';
+import {
+  DecreaseQuantity,
+  MachineWithProductMachine,
+  MachineWithSoldOut,
+  ProductAndQuantity,
+} from './type/machines';
 import { PrismaService } from '../config/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { Machine, Prisma, Product, Product_Machine } from '@prisma/client';
+import { Machine, Prisma } from '@prisma/client';
 
 @Injectable()
 export class MachinesService {
@@ -12,6 +17,7 @@ export class MachinesService {
   }
 
   async findOne(id: number): Promise<Machine> {
+    await this.getMachineWithSoldOut();
     return await this.prisma.machine.findUnique({
       where: {
         id,
@@ -33,8 +39,8 @@ export class MachinesService {
     });
   }
 
-  async findProductInMachine(id: number): Promise<MachineWithProductMachine[]> {
-    return await this.prisma.machine.findMany({
+  async findProductInMachine(id: number): Promise<MachineWithProductMachine> {
+    return await this.prisma.machine.findUnique({
       where: {
         id,
       },
@@ -64,19 +70,119 @@ export class MachinesService {
 
   async addProductToMachine(
     id: number,
-    payload: ProductAndMachine,
+    payload: ProductAndQuantity,
   ): Promise<Machine> {
     const product = this.generateProduct(payload.productId, payload.quantity);
 
-    return await this.prisma.machine.update({
+    return this.prisma.product_Machine
+      .findUnique({
+        where: {
+          machineId_productId: {
+            machineId: id,
+            productId: payload.productId,
+          },
+        },
+      })
+      .then(async (found) => {
+        if (found) {
+          return await this.prisma.machine.update({
+            where: {
+              id,
+            },
+            data: {
+              Product_Machine: {
+                update: {
+                  where: {
+                    machineId_productId: {
+                      machineId: id,
+                      productId: payload.productId,
+                    },
+                  },
+                  data: {
+                    quantity: found.quantity + payload.quantity,
+                  },
+                },
+              },
+            },
+          });
+        } else {
+          return await this.prisma.machine.update({
+            where: {
+              id,
+            },
+            data: {
+              Product_Machine: {
+                create: product,
+              },
+            },
+          });
+        }
+      });
+  }
+
+  async buyProduct(payload: DecreaseQuantity): Promise<Machine> {
+    const machine = await this.prisma.machine.findUnique({
       where: {
-        id,
+        id: payload.machineId,
       },
-      data: {
+      include: {
         Product_Machine: {
-          create: product,
+          include: {
+            product: true,
+          },
         },
       },
     });
+
+    const quantity = machine.Product_Machine.find(
+      (product) => product.productId === payload.productId,
+    ).quantity;
+
+    return this.prisma.machine.update({
+      where: {
+        id: payload.machineId,
+      },
+      data: {
+        Product_Machine: {
+          update: {
+            where: {
+              machineId_productId: {
+                machineId: payload.machineId,
+                productId: payload.productId,
+              },
+            },
+            data: {
+              quantity: quantity - 1,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async getMachineWithSoldOut(): Promise<MachineWithSoldOut[]> {
+    const machines = await this.findAll();
+
+    let resultSoldout: MachineWithSoldOut[] = [];
+
+    await Promise.all(
+      machines.map(async (machine) => {
+        const result = await this.findProductInMachine(machine.id);
+        let notiCount = 0;
+
+        await Promise.all(
+          result.Product_Machine.map((product_machine) => {
+            if (product_machine.quantity === 0) notiCount += 1;
+          }),
+        );
+
+        resultSoldout.push({
+          machineId: machine.id,
+          soldOut: notiCount,
+        } as MachineWithSoldOut);
+      }),
+    );
+
+    return resultSoldout;
   }
 }

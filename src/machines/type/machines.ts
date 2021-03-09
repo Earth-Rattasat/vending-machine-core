@@ -12,7 +12,7 @@ export interface MachineWithProductMachine extends Machine {
   Product_Machine: Product_Machine[];
 }
 
-export interface MachineWithSoldOut {
+export interface MachineWithNoti {
   machineId: number;
-  soldOut: number;
+  noti: number;
 }

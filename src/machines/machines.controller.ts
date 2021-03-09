@@ -13,7 +13,7 @@ import {
 import {
   DecreaseQuantity,
   MachineWithProductMachine,
-  MachineWithSoldOut,
+  MachineWithNoti,
   ProductAndQuantity,
 } from './type';
 
@@ -33,9 +33,9 @@ export class MachinesController {
     return await this.machinesService.addMachine(payload);
   }
 
-  @Get('/soldout')
-  async getSoldOutSummary(): Promise<MachineWithSoldOut[]> {
-    return await this.machinesService.getMachineWithSoldOut();
+  @Get('/notification')
+  async getSoldOutSummary(): Promise<MachineWithNoti[]> {
+    return await this.machinesService.getMachineWithNoti();
   }
 
   @Get('/:id')

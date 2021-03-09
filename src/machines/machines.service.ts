@@ -1,7 +1,7 @@
 import {
   DecreaseQuantity,
   MachineWithProductMachine,
-  MachineWithSoldOut,
+  MachineWithNoti,
   ProductAndQuantity,
 } from './type/machines';
 import { PrismaService } from '../config/prisma.service';
@@ -17,7 +17,7 @@ export class MachinesService {
   }
 
   async findOne(id: number): Promise<Machine> {
-    await this.getMachineWithSoldOut();
+    await this.getMachineWithNoti();
     return await this.prisma.machine.findUnique({
       where: {
         id,
@@ -160,10 +160,10 @@ export class MachinesService {
     });
   }
 
-  async getMachineWithSoldOut(): Promise<MachineWithSoldOut[]> {
+  async getMachineWithNoti(): Promise<MachineWithNoti[]> {
     const machines = await this.findAll();
 
-    let resultSoldout: MachineWithSoldOut[] = [];
+    let resultSoldout: MachineWithNoti[] = [];
 
     await Promise.all(
       machines.map(async (machine) => {
@@ -172,14 +172,14 @@ export class MachinesService {
 
         await Promise.all(
           result.Product_Machine.map((product_machine) => {
-            if (product_machine.quantity === 0) notiCount += 1;
+            if (product_machine.quantity < 10) notiCount += 1;
           }),
         );
 
         resultSoldout.push({
           machineId: machine.id,
-          soldOut: notiCount,
-        } as MachineWithSoldOut);
+          noti: notiCount,
+        } as MachineWithNoti);
       }),
     );
 

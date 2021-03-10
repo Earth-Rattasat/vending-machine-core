@@ -6,11 +6,11 @@ import { NotificationService } from './mailer.service';
   imports: [
     MailerModule.forRoot({
       transport: {
-        host: 'smtp.mailtrap.io',
-        port: 2525,
+        host: process.env.MAIL_HOST,
+        port: process.env.MAIL_PORT,
         auth: {
-          user: '9fd64f2cdf4bc3',
-          pass: 'baf8e1faf3be6c',
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS,
         },
       },
       defaults: {

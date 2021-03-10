@@ -1,4 +1,4 @@
-import { Machine, Prisma, Product_Machine } from '@prisma/client';
+import { Machine, Prisma } from '@prisma/client';
 import { MachinesService } from './machines.service';
 import {
   Body,
@@ -19,7 +19,9 @@ import {
 
 @Controller('machines')
 export class MachinesController {
-  constructor(private machinesService: MachinesService) {}
+  constructor(
+    private machinesService: MachinesService,
+  ) {}
 
   @Get()
   async findAll(): Promise<Machine[]> {

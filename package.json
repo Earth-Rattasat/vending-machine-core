@@ -30,6 +30,7 @@
     "rxjs": "^6.6.6"
   },
   "devDependencies": {
+    "@nestjs-modules/mailer": "^1.5.1",
     "@nestjs/cli": "^7.5.6",
     "@nestjs/schematics": "^7.2.7",
     "@nestjs/testing": "^7.6.13",

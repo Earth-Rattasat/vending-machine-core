@@ -1,3 +1,4 @@
+import { contextMail } from './../mailer/type/mailer';
 import {
   DecreaseQuantity,
   MachineWithProductMachine,
@@ -7,10 +8,14 @@ import {
 import { PrismaService } from '../config/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { Machine, Prisma } from '@prisma/client';
+import { NotificationService } from 'src/mailer/mailer.service';
 
 @Injectable()
 export class MachinesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mailerService: NotificationService,
+  ) {}
 
   async findAll(): Promise<Machine[]> {
     return await this.prisma.machine.findMany();
@@ -134,9 +139,19 @@ export class MachinesService {
       },
     });
 
-    const quantity = machine.Product_Machine.find(
+    const product = machine.Product_Machine.find(
       (product) => product.productId === payload.productId,
-    ).quantity;
+    );
+
+    if (product.quantity - 1 < 10) {
+      const context: contextMail = {
+        productName: product.product.name,
+        machineName: machine.name,
+        machineAddress: machine.address,
+      };
+
+      this.mailerService.sendNotification(context);
+    }
 
     return this.prisma.machine.update({
       where: {
@@ -152,7 +167,7 @@ export class MachinesService {
               },
             },
             data: {
-              quantity: quantity - 1,
+              quantity: product.quantity - 1,
             },
           },
         },
